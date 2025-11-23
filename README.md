@@ -240,7 +240,14 @@ If you find this project useful, please consider:
 
 ## 📄 Changelog
 
-### v1.0.3 (Current)
+### v1.0.4 (Current)
+- **SELL FIAT/BTC Toggle**: Users can now input either BTC amount or desired fiat amount in SELL mode
+- Two SELL calculation modes:
+- Dynamic `<html lang="">` attribute based on selected language
+- Social media meta tags (Open Graph, Twitter Card)
+- Auto-clear amount field when switching between modes
+
+### v1.0.3 
 - 🌐 Added DE and ES languages
 - ✨ updated readme
 

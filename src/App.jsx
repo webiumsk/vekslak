@@ -47,6 +47,7 @@ const translations = {
     btcAmount: "BTC Amount",
     youReceive: "You receive",
     clientSells: "Client sells",
+    clientWantsToReceive: "Client wants to receive",
     yourFee: "Fee",
     numberFormat: "Number Format",
   },
@@ -82,6 +83,7 @@ const translations = {
     btcAmount: "Množstvo BTC",
     youReceive: "Dostaneš",
     clientSells: "Klient predáva",
+    clientWantsToReceive: "Klient chce dostať",
     yourFee: "Poplatok",
     numberFormat: "Formát čísel",
   },
@@ -117,6 +119,7 @@ const translations = {
     btcAmount: "Množství BTC",
     youReceive: "Dostaneš",
     clientSells: "Klient prodává",
+    clientWantsToReceive: "Klient chce dostat",
     yourFee: "Poplatek",
     numberFormat: "Formát čísel",
   },
@@ -152,6 +155,7 @@ const translations = {
     btcAmount: "Ilość BTC",
     youReceive: "Otrzymasz",
     clientSells: "Klient sprzedaje",
+    clientWantsToReceive: "Klient chce otrzymać",
     yourFee: "Opłata",
     numberFormat: "Format liczb",
   },
@@ -187,6 +191,7 @@ const translations = {
     btcAmount: "BTC mennyiség",
     youReceive: "Te kapsz",
     clientSells: "Ügyfél elad",
+    clientWantsToReceive: "Ügyfél kapni szeretne",
     yourFee: "A díjad",
     numberFormat: "Számformátum",
   },
@@ -222,11 +227,10 @@ const translations = {
     btcAmount: "BTC-Menge",
     youReceive: "Du erhältst",
     clientSells: "Kunde verkauft",
+    clientWantsToReceive: "Kunde möchte erhalten",
     yourFee: "Gebühr",
     numberFormat: "Zahlenformat",
   },
-
-  // --- Spanish ---
   es: {
     title: "Vekslák",
     subtitle: "Una app para cambistas éticos",
@@ -259,6 +263,7 @@ const translations = {
     btcAmount: "Cantidad de BTC",
     youReceive: "Recibes",
     clientSells: "Cliente vende",
+    clientWantsToReceive: "Cliente quiere recibir",
     yourFee: "Comisión",
     numberFormat: "Formato numérico",
   },
@@ -298,9 +303,7 @@ const numberFormats = {
   },
 };
 
-// ✨ SMART NUMBER FORMATTER - adapts to selected language
-// EN: 1,000.50 (comma thousands, dot decimal)
-// SK/CS/PL/HU: 1 000,50 (space thousands, comma decimal)
+// ✨ SMART NUMBER FORMATTER
 const formatNumber = (
   number,
   decimals = 0,
@@ -336,6 +339,7 @@ export default function Vexlak() {
   const [screenshotBlob, setScreenshotBlob] = useState(null);
   const [activeTab, setActiveTab] = useState("buy"); // 'buy' or 'sell'
   const [unit, setUnit] = useState("btc"); // 'btc' or 'sats'
+  const [sellInputType, setSellInputType] = useState("fiat"); // 'btc' or 'fiat' for SELL mode
   const [currency, setCurrency] = useState(
     () => localStorage.getItem("btc-currency") || "EUR"
   );
@@ -390,6 +394,10 @@ export default function Vexlak() {
   };
 
   useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  useEffect(() => {
     fetchBTCPrice();
   }, [currency]);
 
@@ -405,7 +413,7 @@ export default function Vexlak() {
       const btcAmount = amountNum / priceWithFee;
       const usdValue = btcAmount * btcPriceUSD;
       const feeAmount = amountNum - btcAmount * btcPriceLocal;
-      const satsAmount = btcAmount * 100000000; // 1 BTC = 100,000,000 sats
+      const satsAmount = btcAmount * 100000000;
 
       return {
         mode: "buy",
@@ -417,22 +425,43 @@ export default function Vexlak() {
         feeAmount,
       };
     } else {
-      // Client sells BTC - fee is subtracted from price
-      const priceWithFee = btcPriceLocal * (1 - feeNum / 100);
-      const eurAmount = amountNum * priceWithFee;
-      const usdValue = amountNum * btcPriceUSD;
-      const feeAmount = amountNum * btcPriceLocal - eurAmount;
-      const satsAmount = amountNum * 100000000; // 1 BTC = 100,000,000 sats
+      // SELL mode - Client sells BTC
+      if (sellInputType === "btc") {
+        // Input: BTC amount → Output: EUR received
+        const priceWithFee = btcPriceLocal * (1 - feeNum / 100);
+        const eurAmount = amountNum * priceWithFee;
+        const usdValue = amountNum * btcPriceUSD;
+        const feeAmount = amountNum * btcPriceLocal - eurAmount;
+        const satsAmount = amountNum * 100000000;
 
-      return {
-        mode: "sell",
-        priceWithFee,
-        btcAmount: amountNum,
-        satsAmount,
-        usdValue,
-        eurAmount,
-        feeAmount,
-      };
+        return {
+          mode: "sell",
+          priceWithFee,
+          btcAmount: amountNum,
+          satsAmount,
+          usdValue,
+          eurAmount,
+          feeAmount,
+        };
+      } else {
+        // sellInputType === "fiat"
+        // Input: EUR amount (client wants to receive) → Output: BTC to sell
+        const priceWithFee = btcPriceLocal * (1 - feeNum / 100);
+        const btcAmount = amountNum / priceWithFee;
+        const usdValue = btcAmount * btcPriceUSD;
+        const feeAmount = btcAmount * btcPriceLocal - amountNum;
+        const satsAmount = btcAmount * 100000000;
+
+        return {
+          mode: "sell",
+          priceWithFee,
+          btcAmount,
+          satsAmount,
+          usdValue,
+          eurAmount: amountNum,
+          feeAmount,
+        };
+      }
     }
   };
 
@@ -484,7 +513,7 @@ export default function Vexlak() {
       const element = document.querySelector(".screenshot-container");
       const canvas = await html2canvas(element, {
         backgroundColor: null,
-        scale: 2, // Higher quality
+        scale: 2,
         logging: false,
       });
 
@@ -506,7 +535,6 @@ export default function Vexlak() {
       type: "image/png",
     });
 
-    // Check if Web Share API is available
     if (
       navigator.share &&
       navigator.canShare &&
@@ -524,12 +552,10 @@ export default function Vexlak() {
       } catch (error) {
         if (error.name !== "AbortError") {
           console.error("Share error:", error);
-          // Fallback to download
           handleDownload();
         }
       }
     } else {
-      // Fallback to download if Share API not available
       handleDownload();
     }
   };
@@ -595,7 +621,10 @@ export default function Vexlak() {
             {/* Buy/Sell Tabs */}
             <div className="flex gap-2 bg-slate-100 rounded-lg">
               <button
-                onClick={() => setActiveTab("buy")}
+                onClick={() => {
+                  setActiveTab("buy");
+                  setAmount("");
+                }}
                 className={`flex-1 py-3 rounded-lg font-bold transition-all ${
                   activeTab === "buy"
                     ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg"
@@ -605,7 +634,11 @@ export default function Vexlak() {
                 {t.buy}
               </button>
               <button
-                onClick={() => setActiveTab("sell")}
+                onClick={() => {
+                  setActiveTab("sell");
+                  setAmount("");
+                  setSellInputType("fiat");
+                }}
                 className={`flex-1 py-3 rounded-lg font-bold transition-all ${
                   activeTab === "sell"
                     ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg"
@@ -675,30 +708,87 @@ export default function Vexlak() {
             {/* Input Fields */}
             <div className="space-y-4">
               <div className="group">
-                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                  {activeTab === "buy" ? (
-                    <>
-                      <span>{currencyConfig.symbol}</span>
-                      {t.clientPays} ({currency})
-                    </>
-                  ) : (
-                    <>
-                      <Bitcoin className="w-4 h-4 text-orange-600" />
-                      {t.clientSells}
-                    </>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    {activeTab === "buy" ? (
+                      <>
+                        <span>{currencyConfig.symbol}</span>
+                        {t.clientPays} ({currency})
+                      </>
+                    ) : (
+                      <>
+                        {sellInputType === "btc" ? (
+                          <>
+                            <Bitcoin className="w-4 h-4 text-orange-600" />
+                            {t.clientSells}
+                          </>
+                        ) : (
+                          <>
+                            <span>{currencyConfig.symbol}</span>
+                            {t.clientWantsToReceive} ({currency})
+                          </>
+                        )}
+                      </>
+                    )}
+                  </label>
+                  {/* BTC/FIAT Toggle for SELL mode */}
+                  {activeTab === "sell" && (
+                    <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+                      <button
+                        onClick={() => {
+                          setSellInputType("fiat");
+                          setAmount("");
+                        }}
+                        className={`px-3 py-1 text-xs font-semibold rounded transition-all ${
+                          sellInputType === "fiat"
+                            ? "bg-orange-600 text-white"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        {currency}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSellInputType("btc");
+                          setAmount("");
+                        }}
+                        className={`px-3 py-1 text-xs font-semibold rounded transition-all ${
+                          sellInputType === "btc"
+                            ? "bg-orange-600 text-white"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}                      >
+                        BTC
+                      </button>
+                    </div>
                   )}
-                </label>
+                </div>
                 <div className="relative">
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder={activeTab === "buy" ? t.exampleAmount : "0.01"}
-                    step={activeTab === "buy" ? "1" : "0.00000001"}
+                    placeholder={
+                      activeTab === "buy"
+                        ? t.exampleAmount
+                        : sellInputType === "btc"
+                        ? "0.01"
+                        : t.exampleAmount
+                    }
+                    step={
+                      activeTab === "buy"
+                        ? "1"
+                        : sellInputType === "btc"
+                        ? "0.00000001"
+                        : "1"
+                    }
                     className="text-xl w-full px-4 py-3 pl-12 border-2 border-slate-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 focus:outline-none text-lg transition-all group-hover:border-slate-300"
                   />
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-lg">
-                    {activeTab === "buy" ? currencyConfig.symbol : "₿"}
+                    {activeTab === "buy"
+                      ? currencyConfig.symbol
+                      : sellInputType === "btc"
+                      ? "₿"
+                      : currencyConfig.symbol}
                   </span>
                 </div>
               </div>
@@ -815,45 +905,113 @@ export default function Vexlak() {
                       </>
                     ) : (
                       <>
-                        {/* SELL: Client receives EUR/CZK/etc */}
-                        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl p-5 shadow-lg">
-                          <div className="text-xs uppercase tracking-wider opacity-90 mb-2">
-                            {t.clientReceives}
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div>
-                                <div className="text-2xl font-bold">
-                                  {formatNumber(
-                                    result.eurAmount,
-                                    2,
-                                    numberFormat
-                                  )}
-                                </div>
-                                <div className="text-sm opacity-90">
-                                  {currency}
+                        {/* SELL: Output depends on input type */}
+                        {sellInputType === "btc" ? (
+                          // Input: BTC → Output: EUR received
+                          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl p-5 shadow-lg">
+                            <div className="text-xs uppercase tracking-wider opacity-90 mb-2">
+                              {t.clientReceives}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div>
+                                  <div className="text-2xl font-bold">
+                                    {formatNumber(
+                                      result.eurAmount,
+                                      2,
+                                      numberFormat
+                                    )}
+                                  </div>
+                                  <div className="text-sm opacity-90">
+                                    {currency}
+                                  </div>
                                 </div>
                               </div>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    result.eurAmount.toFixed(2)
+                                  );
+                                  setCopied(true);
+                                  setTimeout(() => setCopied(false), 2000);
+                                }}
+                                className="p-3 bg-white/20 hover:bg-white/30 rounded-lg transition-all active:scale-95"
+                                title="Copy"
+                              >
+                                {copied ? (
+                                  <Check className="w-4 h-4" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </button>
                             </div>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(
-                                  result.eurAmount.toFixed(2)
-                                );
-                                setCopied(true);
-                                setTimeout(() => setCopied(false), 2000);
-                              }}
-                              className="p-3 bg-white/20 hover:bg-white/30 rounded-lg transition-all active:scale-95"
-                              title="Copy"
-                            >
-                              {copied ? (
-                                <Check className="w-4 h-4" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
-                            </button>
                           </div>
-                        </div>
+                        ) : (
+                          // Input: EUR desired → Output: BTC to sell
+                          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl p-5 shadow-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-xs uppercase tracking-wider opacity-90">
+                                {t.clientSells}
+                              </div>
+                              {/* BTC/SATS Toggle */}
+                              <div className="flex gap-1 bg-white/20 rounded-lg p-1">
+                                <button
+                                  onClick={() => setUnit("btc")}
+                                  className={`px-2 py-1 text-xs font-semibold rounded transition-all ${
+                                    unit === "btc"
+                                      ? "bg-white text-orange-600"
+                                      : "text-white/70 hover:text-white"
+                                  }`}
+                                >
+                                  BTC
+                                </button>
+                                <button
+                                  onClick={() => setUnit("sats")}
+                                  className={`px-2 py-1 text-xs font-semibold rounded transition-all ${
+                                    unit === "sats"
+                                      ? "bg-white text-orange-600"
+                                      : "text-white/70 hover:text-white"
+                                  }`}
+                                >
+                                  SATS
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div>
+                                  <div className="text-2xl font-bold font-mono">
+                                    {unit === "btc"
+                                      ? formatNumber(
+                                          result.btcAmount,
+                                          8,
+                                          numberFormat
+                                        )
+                                      : formatNumber(
+                                          Math.round(result.satsAmount),
+                                          0,
+                                          numberFormat
+                                        )}
+                                  </div>
+                                  <div className="text-sm opacity-90">
+                                    {unit === "btc" ? "BTC" : "SATS"}
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={handleCopy}
+                                className="p-3 bg-white/20 hover:bg-white/30 rounded-lg transition-all active:scale-95"
+                                title="Copy"
+                              >
+                                {copied ? (
+                                  <Check className="w-4 h-4" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
 
@@ -884,7 +1042,9 @@ export default function Vexlak() {
               <div className="font-mono bg-slate-50 rounded-lg p-2">
                 {activeTab === "buy"
                   ? `${t.calculation}: ${currency} ÷ (BTC × (1 + ${fee}%))`
-                  : `${t.calculation}: BTC × (BTC × (1 - ${fee}%))`}
+                  : sellInputType === "btc"
+                  ? `${t.calculation}: BTC × (BTC × (1 - ${fee}%))`
+                  : `${t.calculation}: ${currency} ÷ (BTC × (1 - ${fee}%))`}
               </div>
               <div className="flex justify-center items-center gap-2 text-slate-500">
                 <span>{t.dataFrom}</span>
