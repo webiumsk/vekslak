@@ -12,6 +12,8 @@ import {
   Camera,
   Github,
 } from "lucide-react";
+import { version } from "../package.json";
+
 
 // Translations
 const translations = {
@@ -756,7 +758,8 @@ export default function Vexlak() {
                           sellInputType === "btc"
                             ? "bg-orange-600 text-white"
                             : "text-slate-600 hover:text-slate-900"
-                        }`}                      >
+                        }`}
+                      >
                         BTC
                       </button>
                     </div>
@@ -1047,6 +1050,8 @@ export default function Vexlak() {
                   : `${t.calculation}: ${currency} ÷ (BTC × (1 - ${fee}%))`}
               </div>
               <div className="flex justify-center items-center gap-2 text-slate-500">
+                <span className="text-slate-400 text-[11px]">v {version}</span>
+                <span className="text-slate-700">•</span>
                 <span>{t.dataFrom}</span>
                 <span className="text-slate-700">•</span>
                 <a
