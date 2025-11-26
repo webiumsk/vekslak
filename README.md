@@ -15,11 +15,11 @@ Fast, simple, and accurate BTC/fiat calculator with real-time rates and multi-cu
 ## ✨ Features
 
 - **💱 Real-time rates** - Live BTC prices from Binance API
-- **🌍 Multi-currency** - EUR, CZK, PLN, HUF support
+- **🌍 Multi-currency** - EUR, USD, CZK, PLN, HUF, PYG support
 - **🔄 Buy/Sell modes** - Calculate both directions with custom fees
 - **⚡ BTC/SATS toggle** - Switch between Bitcoin and Satoshi units
 - **🔢 Custom number format** - International (1,000.50) or European (1 000,50)
-- **🌐 Multi-language** - English, Slovak, Czech, Polish, Hungarian
+- **🌐 Multi-language** - English, Slovak, Czech, Polish, Hungarian, German, Spanish
 - **📸 Screenshot sharing** - Export calculations as images
 - **💾 LocalStorage** - Remembers your preferences
 
@@ -59,13 +59,13 @@ Open [http://localhost:5173](http://localhost:5173)
 ### Basic Calculation
 
 1. **Select mode**: BUY or SELL
-2. **Enter amount**: EUR/CZK/PLN/HUF or BTC
+2. **Enter amount**: EUR/USD/CZK/PLN/HUF/PYG or BTC
 3. **Set fee**: Your commission percentage
 4. **View result**: Instant calculation with BTC amount
 
 ### Settings
 
-- **Currency**: Choose base currency (EUR, CZK, PLN, HUF)
+- **Currency**: Choose base currency (EUR, USD, CZK, PLN, HUF, PYG)
 - **Language**: Select UI language
 - **Number Format**: International or European number formatting
 
@@ -98,7 +98,7 @@ Open [http://localhost:5173](http://localhost:5173)
 ```javascript
 // Fetches live BTC price in multiple currencies
 - BTC/USD from Binance
-- Auto-converts to EUR, CZK, PLN, HUF
+- Auto-converts to EUR, USD, CZK, PLN, HUF, PYG
 - Updates on demand
 ```
 
@@ -146,7 +146,7 @@ Your fee:      19.13 €
 ## 💾 LocalStorage Keys
 
 ```javascript
-btc-currency        // "EUR" | "CZK" | "PLN" | "HUF"
+btc-currency        // "EUR" | "USD" | "CZK" | "PLN" | "HUF" | "PYG"
 btc-language        // "en" | "sk" | "cs" | "pl" | "hu" | "de" | "es"
 btc-number-format   // "international" | "european"
 ```
@@ -240,18 +240,28 @@ If you find this project useful, please consider:
 
 ## 📄 Changelog
 
-### v1.0.5 (Current)
+### v1.0.6 (Current)
+- Added Dark Mode theme toggle
+- Added Spanish and German translations
+- Added USD and PYG currency options
+- SettingsModal redesign — language is now a select dropdown
+- Improved BTC price timestamp formatting (European 24h format)
+- Created reusable UI components: CalculationPreview, CopyToast, CurrentPriceCard...
+- Refactored BTC buying/selling logic into a standalone calculateTrade() function
+- Added complete test suite for BUY / SELL modes (BTC input + FIAT input)
+
+### v1.0.5
 - Made the app installable - Added manifest.json 
 
 ### v1.0.4 
 - **SELL FIAT/BTC Toggle**: Users can now input either BTC amount or desired fiat amount in SELL mode
-- Two SELL calculation modes:
+- Two SELL calculation modes: 
 - Dynamic `<html lang="">` attribute based on selected language
 - Social media meta tags (Open Graph, Twitter Card)
 - Auto-clear amount field when switching between modes
 
 ### v1.0.3 
-- 🌐 Added DE and ES languages
+- 🌐 Added ES language
 - ✨ updated readme
 
 ### v1.0.2
